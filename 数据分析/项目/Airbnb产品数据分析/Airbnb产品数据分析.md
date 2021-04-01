@@ -361,7 +361,7 @@ af_prv_df['类型'] = af_prv_df['channel'] + '-' + af_prv_df['provider']
 af_prv_df['占比'] = af_prv_df['渠道预定数量'] /af_prv_df['渠道全部数量']
 ```
 
-![](D:\github\-Data-Analysis\数据分析\项目\Airbnb产品数据分析\渠道转化.png)
+![](渠道转化.png)
 
 3.营销广告转化
 
@@ -376,7 +376,7 @@ first_aff_trac_df['占比'] = first_aff_trac_df['该来源预定人数'] /first_
 first_aff_trac_df = first_aff_trac_df[first_aff_trac_df['营销广告来源'] != 'untracked']
 ```
 
-![](D:\github\-Data-Analysis\数据分析\项目\Airbnb产品数据分析\广告占比.png)
+![](广告占比.png)
 
 4.转化量漏斗分析
 
@@ -413,6 +413,6 @@ re_pay_user_df = re_pay_user_df[re_pay_user_df['num'] > 1]
 | 成功支付的用户数 | 9018   |
 | 重复购买用户数   | 4153   |
 
-![](D:\github\-Data-Analysis\数据分析\项目\Airbnb产品数据分析\转化率.png)
+![](转化率.png)
 
 ## 6.总结
