@@ -1,5 +1,9 @@
 # Airbnb产品数据分析
 
+> 数据处理工具：python
+>
+> 图像绘制工具：power bi
+
 ## 1.背景
 
 **Airbnb**是一个旅行房屋租赁社区，用户可通过网络或手机应用程序发布、搜索度假房屋租赁信息并完成在线预定程序。 据官网显示 以及媒体报道 ，其社区平台在191个国家、65,000个城市为旅行者们提供数以百万计的独特入住选择，不管是公寓、别墅、城堡还是树屋。 **Airbnb**被时代周刊称为“住房中的EBay”。
@@ -316,7 +320,11 @@ train_users_df = train_users_df.drop_duplicates(subset=['id'],keep='first')
 
    ![](注册app.png)
 
-6. 用户量变化
+   
+
+### 5.2流量分析
+
+1. 用户量变化
 
    ```
    train_users_df['year_month'] = train_users_df['date_account_created'].apply(lambda x : x.strftime('%Y-%m'))
@@ -341,5 +349,70 @@ train_users_df = train_users_df.drop_duplicates(subset=['id'],keep='first')
 
 
 
-### 5.2
+2.渠道转化
 
+```python
+af_prv_df = train_users_df[(train_users_df['date_first_booking'].notnull())].groupby(['affiliate_channel','affiliate_provider']).size().to_frame()
+af_prv_df_1 = train_users_df.groupby(['affiliate_channel','affiliate_provider']).size().to_frame()
+af_prv_df = af_prv_df.merge(af_prv_df_1, how='inner', left_index=True , right_index=True).reset_index()
+af_prv_df.columns = ['channel','provider','渠道预定数量','渠道全部数量']
+af_prv_df = af_prv_df[af_prv_df['渠道预定数量'] > 200]
+af_prv_df['类型'] = af_prv_df['channel'] + '-' + af_prv_df['provider']
+af_prv_df['占比'] = af_prv_df['渠道预定数量'] /af_prv_df['渠道全部数量']
+```
+
+![](D:\github\-Data-Analysis\数据分析\项目\Airbnb产品数据分析\渠道转化.png)
+
+3.营销广告转化
+
+```python
+first_aff_trac_df = train_users_df[(train_users_df['date_first_booking'].notnull())].groupby(['first_affiliate_tracked']).size().to_frame()
+first_aff_trac_df_1 = train_users_df.groupby(['first_affiliate_tracked']).size().to_frame()
+first_aff_trac_df = first_aff_trac_df.merge(first_aff_trac_df_1, how='inner', left_index=True , right_index=True).reset_index()
+first_aff_trac_df.columns = ['营销广告来源','该来源预定人数','该来源全部人数']
+#first_aff_trac_df = first_aff_trac_df[first_aff_trac_df['渠道预定数量'] > 200]
+#first_aff_trac_df['类型'] = first_aff_trac_df['channel'] + '-' + first_aff_trac_df['provider']
+first_aff_trac_df['占比'] = first_aff_trac_df['该来源预定人数'] /first_aff_trac_df['该来源全部人数']
+first_aff_trac_df = first_aff_trac_df[first_aff_trac_df['营销广告来源'] != 'untracked']
+```
+
+![](D:\github\-Data-Analysis\数据分析\项目\Airbnb产品数据分析\广告占比.png)
+
+4.转化量漏斗分析
+
+```python
+#总用户量
+total_user_df = sessions_df.drop_duplicates('user_id')
+#注册用户数
+user_creat_df = total_user_df[['user_id','action_detail']].merge(train_users_df[['id','date_account_created']],how = 'left',left_on = 'user_id',right_on = 'id')
+#定义用户在平台浏览次数超过10次即为活跃用户。活跃用户数为
+n_df = sessions_df[['user_id','action_detail']].merge(train_users_df[['id','date_account_created']],how = 'left',left_on = 'user_id',right_on = 'id')
+n_df = n_df[n_df['date_account_created'].notnull()]
+n_df = n_df.groupby('user_id').size().to_frame().reset_index()
+n_df.columns = ['user_id','num']
+n_df = n_df[n_df['num']>10]
+#注册用户中提交过订单信息的用户数
+place_order_df = user_creat_df[user_creat_df['date_account_created'].notnull()]
+place_order_df = sessions_df[sessions_df['action_detail'] == 'reservations'].groupby('user_id').size()
+#注册用户中成功支付的用户数
+place_order_df = user_creat_df[user_creat_df['date_account_created'].notnull()]
+place_order_df = sessions_df[sessions_df['action_detail'] == 'payment_instruments'].groupby('user_id').size()
+#重复购买用户数
+re_pay_user_df = place_order_df.to_frame().reset_index()
+re_pay_user_df.columns = ["user_id","num"]
+re_pay_user_df = re_pay_user_df[re_pay_user_df['num'] > 1]
+	
+```
+
+| 类别             | 人数   |
+| ---------------- | ------ |
+| 总用户量         | 135484 |
+| 注册用户数       | 73815  |
+| 活跃用户数       | 58881  |
+| 提交订单用户数   | 10366  |
+| 成功支付的用户数 | 9018   |
+| 重复购买用户数   | 4153   |
+
+![](D:\github\-Data-Analysis\数据分析\项目\Airbnb产品数据分析\转化率.png)
+
+## 6.总结
